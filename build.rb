@@ -1,62 +1,77 @@
-.PHONY: run build-desktop build-android build-deb build-rpm build-appimage cli-install clean help
+#!/usr/bin/env ruby
+require 'fileutils'
 
-## Uruchom aplikację desktop
-run:
-	./gradlew :main:run
+# Definicja dostępnych zadań i ich opisów
+TASKS = {
+	'run'                   => 'Uruchom desktop GUI',
+	'build-desktop'         => 'Zbuduj JAR',
+	'build-deb'             => 'Zbuduj .deb',
+	'build-rpm'             => 'Zbuduj .rpm (LegendaryOS)',
+	'build-appimage'        => 'Zbuduj AppImage',
+	'build-android'         => 'Zbuduj debug APK',
+	'build-android-release' => 'Zbuduj release APK',
+	'install-android'       => 'Zainstaluj APK na telefonie',
+	'cli-install'           => 'Zainstaluj CLI (legendary)',
+	'clean'                 => 'Wyczyść artefakty',
+	'help'                  => 'Wyświetl tę pomoc'
+}.freeze
 
-## Zbuduj aplikację desktop (JAR)
-build-desktop:
-	./gradlew :main:packageJar
+def run_command(cmd)
+	puts "-> #{cmd}"
+	system(cmd) || exit(1)
+end
 
-## Zbuduj .deb
-build-deb:
-	./gradlew :main:packageDeb
+def help
+	puts "\n  LegendaryOS App — dostępne polecenia:\n\n"
+	TASKS.each do |task, desc|
+		puts "  ruby build.rb #{task.ljust(25)} #{desc}"
+	end
+	puts "\n"
+end
 
-## Zbuduj .rpm (dla LegendaryOS/Fedora)
-build-rpm:
-	./gradlew :main:packageRpm
+# Logika wykonawcza dla poszczególnych zadań
+task = ARGV.first || 'help'
 
-## Zbuduj AppImage
-build-appimage:
-	./gradlew :main:packageAppImage
+case task
+when 'run'
+	run_command('./gradlew :main:run')
 
-## Zbuduj APK dla Androida
-build-android:
-	./gradlew :android:assembleDebug
-	@echo ""
-	@echo "✓ APK gotowy: android/build/outputs/apk/debug/android-debug.apk"
+when 'build-desktop'
+	run_command('./gradlew :main:packageJar')
 
-## Zbuduj release APK
-build-android-release:
-	./gradlew :android:assembleRelease
+when 'build-deb'
+	run_command('./gradlew :main:packageDeb')
 
-## Zainstaluj APK na podłączonym urządzeniu
-install-android:
-	./gradlew :android:installDebug
+when 'build-rpm'
+	run_command('./gradlew :main:packageRpm')
 
-## Zainstaluj CLI
-cli-install:
-	chmod +x cli/legendary
-	sudo ln -sf $(CURDIR)/cli/legendary /usr/local/bin/legendary
-	@echo "✓ CLI zainstalowane: legendary"
+when 'build-appimage'
+	run_command('./gradlew :main:packageAppImage')
 
-## Usuń artefakty
-clean:
-	./gradlew clean
+when 'build-android'
+	run_command('./gradlew :android:assembleDebug')
+	puts "\n✓ APK gotowy: android/build/outputs/apk/debug/android-debug.apk"
 
-## Pomoc
-help:
-	@echo ""
-	@echo "  LegendaryOS App — dostępne polecenia:"
-	@echo ""
-	@echo "  make run                 Uruchom desktop GUI"
-	@echo "  make build-desktop       Zbuduj JAR"
-	@echo "  make build-deb           Zbuduj .deb"
-	@echo "  make build-rpm           Zbuduj .rpm (LegendaryOS)"
-	@echo "  make build-appimage      Zbuduj AppImage"
-	@echo "  make build-android       Zbuduj debug APK"
-	@echo "  make build-android-release  Zbuduj release APK"
-	@echo "  make install-android     Zainstaluj APK na telefonie"
-	@echo "  make cli-install         Zainstaluj CLI (legendary)"
-	@echo "  make clean               Wyczyść artefakty"
-	@echo ""
+when 'build-android-release'
+	run_command('./gradlew :android:assembleRelease')
+
+when 'install-android'
+	run_command('./gradlew :android:installDebug')
+
+when 'cli-install'
+	current_dir = Dir.pwd
+	run_command('chmod +x cli/legendary')
+	run_command("sudo ln -sf #{current_dir}/cli/legendary /usr/local/bin/legendary")
+	puts "✓ CLI zainstalowane: legendary"
+
+when 'clean'
+	run_command('./gradlew clean')
+
+when 'help', '-h', '--help'
+	help
+
+else
+	puts "Nieznane polecenie: #{task}"
+	help
+	exit 1
+end

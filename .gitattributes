@@ -1,0 +1,7 @@
+*.kts linguist-detectable=true
+*.kts linguist-documentation=false
+*.kts linguist-language=KOTLIN
+
+*.xml linguist-detectable=true
+*.xml linguist-documentation=false
+*.xml linguist-language=XML

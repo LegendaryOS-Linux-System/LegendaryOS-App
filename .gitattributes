@@ -5,3 +5,7 @@
 *.xml linguist-detectable=true
 *.xml linguist-documentation=false
 *.xml linguist-language=XML
+
+*.note linguist-detectable=true
+*.note linguist-documentation=false
+*.note linguist-language=TEXT

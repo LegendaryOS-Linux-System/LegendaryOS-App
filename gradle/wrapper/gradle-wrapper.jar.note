@@ -1,0 +1,4 @@
+Pobierz gradle wrapper jar komendą:
+  cd LegendaryOS-App-source
+  gradle wrapper --gradle-version 8.8
+Lub zainstaluj gradlew ręcznie jeśli używasz systemowego gradle.

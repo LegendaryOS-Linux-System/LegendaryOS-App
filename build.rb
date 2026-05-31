@@ -33,13 +33,12 @@ end
 TASKS = {
   'run'                   => 'Uruchom desktop GUI',
   'build-desktop'         => 'Zbuduj JAR (uber jar dla bieżącego OS)',
-  'build-deb'             => 'Zbuduj .deb',
   'build-rpm'             => 'Zbuduj .rpm (LegendaryOS/Fedora)',
   'build-appimage'        => 'Zbuduj AppImage',
   'build-android'         => 'Zbuduj debug APK',
   'build-android-release' => 'Zbuduj release APK',
   'install-android'       => 'Zainstaluj APK na telefonie (ADB)',
-  'cli-install'           => 'Zainstaluj CLI (legendary) globalnie',
+  'cli-install'           => 'Zainstaluj CLI lapp (/usr/share/LegendaryOS/tools/lapp/ + /usr/bin/lapp)',
   'clean'                 => 'Wyczyść wszystkie artefakty',
   'check-java'            => 'Sprawdź wersję Java i środowisko',
   'check-android'         => 'Sprawdź Android SDK i wygeneruj local.properties',
@@ -191,7 +190,9 @@ def help
   puts "    #{C.muted('Schowek:   ')} sudo dnf install wl-clipboard"
   puts "    #{C.muted('Mirror:    ')} flatpak install flathub info.guardianproject.Scrcpy"
   puts "\n  #{C.bold('UWAGI:')}"
-  puts "    #{C.muted('• build-desktop buduje uber JAR (packageUberJarForCurrentOS)')}"
+  puts "    #{C.muted('• v0.0.1 — pierwsza publiczna wersja')}
+  #{C.muted('• build-desktop buduje uber JAR (packageUberJarForCurrentOS)')}
+  #{C.muted('• build-rpm + build-appimage (brak .deb — tylko Fedora/LegendaryOS)')}"
   puts "    #{C.muted('• Android SDK wykrywany z ANDROID_HOME lub ~/Android/Sdk')}"
   puts "    #{C.muted('• local.properties generowany automatycznie')}"
   puts
@@ -257,13 +258,6 @@ when 'build-desktop'
   jar = Dir["#{jar_dir}/*.jar"].first
   ok "JAR gotowy: #{jar || jar_dir + '/'}"
 
-when 'build-deb'
-  section "Buduję pakiet .deb"
-  check_java_version!
-  ensure_wrapper!
-  run_command("#{gradle_bin} :main:packageDeb")
-  ok "Plik .deb gotowy w: main/build/compose/binaries/main/deb/"
-
 when 'build-rpm'
   section "Buduję pakiet .rpm (LegendaryOS / Fedora)"
   check_java_version!
@@ -319,18 +313,34 @@ when 'install-android'
   ok "APK zainstalowany na urządzeniu"
 
 when 'cli-install'
-  section "Instaluję CLI (legendary)"
+  # Instaluje lapp do /usr/share/LegendaryOS/tools/lapp/ + wrapper /usr/bin/lapp
+  section "Instaluję CLI lapp"
   current_dir = Dir.pwd
-  cli_path    = File.join(current_dir, 'cli', 'legendary')
-  unless File.exist?(cli_path)
-    puts C.red("✗ Nie znaleziono: #{cli_path}")
-    exit(1)
+  lapp_src    = File.join(current_dir, 'lapp', 'lapp')
+  lib_src     = File.join(current_dir, 'lapp', 'lib')
+  wrapper_src = File.join(current_dir, 'packaging', 'wrappers', 'lapp')
+
+  [lapp_src, lib_src, wrapper_src].each do |p|
+    unless File.exist?(p)
+      puts C.red("✗ Nie znaleziono: #{p}")
+      exit(1)
+    end
   end
-  run_command("chmod +x #{cli_path}")
-  run_command("sudo ln -sf #{cli_path} /usr/local/bin/legendary")
-  ok "CLI zainstalowane — dostępne jako: legendary"
-  puts C.muted("  Sprawdź: legendary help")
-  puts C.muted("  Uruchom GUI: legendary app")
+
+  lapp_dest = '/usr/share/LegendaryOS/tools/lapp'
+  run_command("sudo mkdir -p #{lapp_dest}/lib")
+  run_command("sudo cp #{lapp_src} #{lapp_dest}/lapp")
+  run_command("sudo cp #{lib_src}/*.rb #{lapp_dest}/lib/")
+  run_command("sudo chmod +x #{lapp_dest}/lapp")
+  run_command("sudo cp #{wrapper_src} /usr/bin/lapp")
+  run_command("sudo chmod +x /usr/bin/lapp")
+
+  ok "CLI zainstalowane!"
+  puts C.muted("  Pliki:    #{lapp_dest}/")
+  puts C.muted("  Wrapper:  /usr/bin/lapp")
+  puts
+  puts C.muted("  Sprawdź:  lapp help")
+  puts C.muted("  Uruchom:  lapp app")
 
 when 'clean'
   section "Czyszczę artefakty"

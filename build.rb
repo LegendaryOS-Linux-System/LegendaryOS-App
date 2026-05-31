@@ -131,6 +131,15 @@ ANDROID_SDK_CANDIDATES = [
   '/usr/lib/android-sdk',
   ].compact.freeze
 
+def check_rpmbuild!
+  return if system('which rpmbuild > /dev/null 2>&1')
+  puts C.red("✗ Brak rpmbuild — wymagany do budowania pakietów RPM.")
+  puts C.muted("  Zainstaluj: sudo dnf install rpm-build")
+  puts C.orange("  Alternatywa: ruby build.rb build-appimage")
+  exit(1)
+end
+
+
 def find_android_sdk
   ANDROID_SDK_CANDIDATES.find { |p| p && Dir.exist?(File.join(p, 'platform-tools')) }
 end
@@ -187,6 +196,7 @@ def help
   puts "\n  #{C.bold('WYMAGANIA:')}"
   puts "    #{C.muted('Java 21+:  ')} sudo dnf install java-21-openjdk-devel"
   puts "    #{C.muted('ADB:       ')} sudo dnf install android-tools"
+  puts "    #{C.muted('RPM build: ')} sudo dnf install rpm-build"
   puts "    #{C.muted('Schowek:   ')} sudo dnf install wl-clipboard"
   puts "    #{C.muted('Mirror:    ')} flatpak install flathub info.guardianproject.Scrcpy"
   puts "\n  #{C.bold('UWAGI:')}"
@@ -263,12 +273,21 @@ when 'build-rpm'
   check_java_version!
   ensure_wrapper!
   set_java_home_hint
+
+  check_rpmbuild!
   run_command("#{gradle_bin} :main:packageRpm")
   rpm = Dir['main/build/compose/binaries/main/rpm/*.rpm'].first
   ok "Plik .rpm gotowy: #{rpm || 'main/build/compose/binaries/main/rpm/'}"
   if rpm
-    puts C.muted("  Zainstaluj: sudo rpm -i #{rpm}")
-    puts C.muted("  Lub:        sudo dnf install #{rpm}")
+    puts
+    puts C.muted("  Zainstaluj lokalnie:")
+    puts C.muted("    sudo rpm -i #{rpm}")
+    puts C.muted("    # lub:")
+    puts C.muted("    sudo dnf install #{rpm}")
+    puts
+    puts C.muted("  Po instalacji:")
+    puts C.muted("    lapp app          # uruchom przez CLI")
+    puts C.muted("    LegendaryOS-App   # uruchom bezpośrednio")
   end
 
 when 'build-appimage'

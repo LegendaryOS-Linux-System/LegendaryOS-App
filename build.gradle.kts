@@ -1,14 +1,9 @@
 plugins {
-    kotlin("jvm") version "1.9.23" apply false
-    kotlin("android") version "1.9.23" apply false
-    id("org.jetbrains.compose") version "1.6.2" apply false
-    id("com.android.application") version "8.3.0" apply false
-}
-
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    }
+    kotlin("jvm")                              version "2.0.20" apply false
+    kotlin("android")                          version "2.0.20" apply false
+    kotlin("plugin.serialization")             version "2.0.20" apply false
+    id("org.jetbrains.kotlin.plugin.compose")  version "2.0.20" apply false
+    id("org.jetbrains.compose")                version "1.7.0"  apply false
+    id("com.android.application")              version "8.6.1"  apply false
+    id("com.android.library")                  version "8.6.1"  apply false
 }
